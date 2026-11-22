@@ -5,6 +5,9 @@ on:
     branches: [ "main" ]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -18,17 +21,26 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Установка Android SDK
-        uses: android-actions/setup-android@v3
-
-      - name: Сборка APK через Gradle
+      - name: Сборка APK (напрямую на встроенном Android SDK)
+        env:
+          ANDROID_HOME: /usr/local/lib/android/sdk
+          ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
         run: |
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
           gradle wrapper --gradle-version 8.4
           chmod +x ./gradlew
           ./gradlew assembleDebug
+          cp app/build/outputs/apk/debug/app-debug.apk ./KUB_125_STERZHEN.apk
 
-      - name: Выгрузка готового APK
+      - name: Выгрузка APK в артефакты
         uses: actions/upload-artifact@v4
         with:
           name: KUB-125-STERZHEN-APK
-          path: app/build/outputs/apk/debug/app-debug.apk
+          path: ./KUB_125_STERZHEN.apk
+
+      - name: Публикация прямой ссылки на APK в Releases
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v125.1
+          name: "Большой КУБ 125 (5x5x5) APK"
+          files: ./KUB_125_STERZHEN.apk
