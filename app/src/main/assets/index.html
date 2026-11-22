@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>МНЕМОСХЕМА КУБА 125 | РУССКАЯ СРЕДА</title>
+<style>
+  :root {
+    --bg-main: #060a0f; --bg-panel: #0b121c; --bg-btn: #111a26;
+    --border-dim: #1e2d40; --cyan: #25c2e6; --green: #22c55e;
+    --green-bg: #123e28; --green-bright: #4ade80; --text-main: #d1e0ec;
+    --text-muted: #5e768f; --amber: #f59e0b;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-tap-highlight-color: transparent; }
+  body {
+    background-color: var(--bg-main); color: var(--text-main);
+    font-family: 'Courier New', Consolas, monospace;
+    display: flex; flex-direction: column; height: 100vh; overflow: hidden;
+  }
+  .header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 8px 12px; background: #080e16; border-bottom: 1px solid var(--border-dim);
+  }
+  .header-title { color: var(--cyan); font-size: 14px; font-weight: bold; }
+  .header-nodes { color: var(--green-bright); font-size: 14px; font-weight: bold; }
+  .top-tabs { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; padding: 6px 10px; }
+  .tab-btn {
+    background: var(--bg-btn); border: 1px solid var(--border-dim); color: var(--text-muted);
+    padding: 8px 4px; border-radius: 6px; font-family: inherit; font-size: 11px; font-weight: bold;
+  }
+  .tab-btn.active { background: var(--green-bg); border-color: var(--green); color: #fff; }
+  .status-bar {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 4px 12px; font-size: 11px; color: var(--text-muted);
+    border-bottom: 1px solid #131e2c; background: #080d14;
+  }
+  .coord-nav { display: flex; align-items: center; gap: 5px; }
+  .coord-btn {
+    background: #142030; border: 1px solid #263850; color: var(--cyan);
+    padding: 2px 8px; border-radius: 4px; font-size: 11px; font-family: inherit;
+  }
+  .canvas-wrap {
+    position: relative; height: 190px;
+    background: radial-gradient(circle at center, #0c1926 0%, #05080c 85%);
+    border-bottom: 1px solid var(--border-dim); overflow: hidden;
+  }
+  canvas { width: 100%; height: 100%; display: block; }
+  .view-toggle {
+    position: absolute; top: 6px; right: 8px; background: rgba(14, 24, 36, 0.9);
+    border: 1px solid var(--cyan); color: var(--cyan); font-family: inherit;
+    font-size: 10px; padding: 4px 8px; border-radius: 4px; z-index: 5;
+  }
+  .neighbors-hud {
+    position: absolute; bottom: 5px; left: 8px; font-size: 10px; color: #7894b0;
+    background: rgba(6, 10, 15, 0.85); padding: 2px 6px; border-radius: 4px; border: 1px solid #182635;
+  }
+  .quick-ops { display: flex; gap: 6px; padding: 6px 10px; overflow-x: auto; }
+  .op-btn {
+    background: #101b29; border: 1px solid #20334a; color: var(--cyan);
+    padding: 6px 9px; border-radius: 6px; font-family: inherit; font-size: 11px; font-weight: bold; white-space: nowrap;
+  }
+  .editor-box {
+    flex: 1; margin: 2px 10px 6px 10px; background: var(--bg-panel);
+    border: 1px solid #1f3349; border-radius: 8px; display: flex; flex-direction: column; overflow: hidden;
+  }
+  .editor-header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 6px 10px; font-size: 11px; border-bottom: 1px solid #152232; background: #0d1622;
+  }
+  .editor-title { color: var(--cyan); }
+  .editor-actions { display: flex; gap: 10px; }
+  .action-link { color: var(--amber); font-size: 11px; font-weight: bold; }
+  .action-link.clone { color: var(--green-bright); }
+  .code-area {
+    flex: 1; width: 100%; background: transparent; border: none; color: #e2edf8;
+    font-family: inherit; font-size: 13px; line-height: 1.45; padding: 8px 10px; resize: none; outline: none; user-select: text;
+  }
+  .console-box {
+    height: 68px; margin: 0 10px 6px 10px; background: #05080c;
+    border: 1px solid #172434; border-radius: 8px; padding: 6px 10px;
+    font-size: 11px; line-height: 1.35; overflow-y: auto; color: var(--green-bright);
+  }
+  .log-dim { color: #5c8773; }
+  .log-cyan { color: var(--cyan); }
+  .bottom-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; padding: 0 10px 10px 10px; }
+  .ctrl-btn {
+    background: var(--bg-btn); border: 1px solid var(--border-dim); color: var(--text-main);
+    padding: 10px 2px; border-radius: 7px; font-family: inherit; font-size: 11px; font-weight: bold; text-align: center;
+  }
+  .ctrl-btn.active-face { background: var(--green-bg); border-color: var(--green); color: #fff; }
+  .ctrl-btn.build-btn { background: #175936; border-color: var(--green-bright); color: #fff; }
+</style>
+</head>
+<body>
+  <div class="header">
+    <div class="header-title">МНЕМОСХЕМА КУБА | РУССКАЯ СРЕДА</div>
+    <div class="header-nodes">УЗЛОВ: 125</div>
+  </div>
+  <div class="top-tabs">
+    <button class="tab-btn active" id="tab1" onclick="switchMode('FORGE')">1. КУЗНИЦА</button>
+    <button class="tab-btn" id="tab2" onclick="switchMode('MATRIX')">2. ПРИЛОЖЕНИЕ (125)</button>
+    <button class="tab-btn" id="tab3" onclick="switchMode('SHELL')">3. ОБОЛОЧКА</button>
+  </div>
+  <div class="status-bar">
+    <div id="nodeTitle">УЗЕЛ: [Пульт_Сигнала] | ГРАНЬ: [3] 03_ЛОГИКА</div>
+    <div class="coord-nav">
+      <button class="coord-btn" onclick="stepCube(-1)">◀</button>
+      <span id="cubeIndexLabel" style="color:#25c2e6;font-weight:bold;">#63/125</span>
+      <button class="coord-btn" onclick="stepCube(1)">▶</button>
+    </div>
+  </div>
+  <div class="canvas-wrap">
+    <button class="view-toggle" id="toggleViewBtn" onclick="toggleVisualMode()">3D МАТРИЦА 125</button>
+    <canvas id="cubeCanvas"></canvas>
+    <div class="neighbors-hud" id="neighborsHud">СВЯЗИ: 6 ГРАНЕЙ | СИГНАЛ: 10</div>
+  </div>
+  <div class="quick-ops">
+    <button class="op-btn" onclick="insertCmd('Усилить Сигнал в 4')">+ Усилить</button>
+    <button class="op-btn" onclick="insertCmd('Сложить Сигнал, Добавка')">+ Сложить</button>
+    <button class="op-btn" onclick="insertCmd('Вычесть Сигнал, 10')">+ Вычесть</button>
+    <button class="op-btn" onclick="insertCmd('ЗАЛП Преобразование (ТАКТОВ = 19, СИЛА = 255)')">+ ЗАЛП</button>
+    <button class="op-btn" onclick="insertCmd('Передать_Соседям Сигнал')">+ Связь</button>
+  </div>
+  <div class="editor-box">
+    <div class="editor-header">
+      <span class="editor-title" id="editorHeaderTitle">МОДУЛЬ ГРАНИ [03_ЛОГИКА / стержень.куб]</span>
+      <div class="editor-actions">
+        <span class="action-link clone" onclick="cloneLogicToAll()">[НА ВСЕ 125]</span>
+        <span class="action-link" onclick="clearEditor()">[ОЧИСТИТЬ]</span>
+      </div>
+    </div>
+    <textarea id="codeEditor" class="code-area" spellcheck="false" oninput="saveCurrentFaceCode()"></textarea>
+  </div>
+  <div class="console-box" id="consoleBox"></div>
+  <div class="bottom-grid">
+    <button class="ctrl-btn" id="faceBtn1" onclick="selectFace(1)">1:ВХОД</button>
+    <button class="ctrl-btn" id="faceBtn2" onclick="selectFace(2)">2:ПАМЯТЬ</button>
+    <button class="ctrl-btn active-face" id="faceBtn3" onclick="selectFace(3)">3:ЛОГИКА</button>
+    <button class="ctrl-btn" id="faceBtn4" onclick="selectFace(4)">4:СВЯЗЬ</button>
+    <button class="ctrl-btn" id="faceBtn5" onclick="selectFace(5)">5:КОНТРОЛЬ</button>
+    <button class="ctrl-btn" id="faceBtn6" onclick="selectFace(6)">6:ВЫХОД</button>
+    <button class="ctrl-btn" onclick="toggleVisualMode()">ЛИК ЭКРАНА</button>
+    <button class="ctrl-btn" onclick="inspectBridgeTopology()">ОБОЛОЧКА</button>
+    <button class="ctrl-btn" onclick="resetCurrentCube()">НОВЫЙ</button>
+    <button class="ctrl-btn" onclick="stepCube(1)">УЗЕЛ (+1)</button>
+    <button class="ctrl-btn" onclick="propagateWave125()">ПУТЬ (125)</button>
+    <button class="ctrl-btn build-btn" onclick="compileAndRunCube()">СБОРКА</button>
+  </div>
+<script>
+const GRID_SIZE = 5, TOTAL_CUBES = 125;
+const FACES = {
+  1: { id: 1, code: '01_ВХОД',     neighborDir: [-1, 0, 0] },
+  2: { id: 2, code: '02_ПАМЯТЬ',   neighborDir: [ 0,-1, 0] },
+  3: { id: 3, code: '03_ЛОГИКА',   neighborDir: [ 0, 0,-1] },
+  4: { id: 4, code: '04_СВЯЗЬ',    neighborDir: [ 0, 0, 1] },
+  5: { id: 5, code: '05_КОНТРОЛЬ', neighborDir: [ 0, 1, 0] },
+  6: { id: 6, code: '06_ВЫХОД',    neighborDir: [ 1, 0, 0] }
+};
+const DEFAULT_SCRIPTS = {
+  1: "Принять Сигнал_Соседей\nСложить Сигнал, Входной_Поток",
+  2: "Сохранить Сигнал в Ячейка_0\nДобавка = 25",
+  3: "Усилить Сигнал в 4\nСложить Сигнал, Добавка\nЗАЛП Преобразование (ТАКТОВ = 19, СИЛА = 255)\nУсилить Сигнал в 4\nВычесть Сигнал, 10\nВычесть Сигнал, 10\nВычесть Сигнал, 10\nВычесть Сигнал, 10\nВычесть Сигнал, 10\nВычесть Сигнал, 10\nВычесть Сигнал, 10\nУсилить Сигнал в 4\nВычесть Сигнал, 10",
+  4: "Передать_Соседям Сигнал\nСинхронизировать Грани",
+  5: "Проверить Предел_Тактов = 256\nКонтроль_Целостности Грань",
+  6: "Выдать Сигнал на Смежные_Кубы"
+};
+const cubes = [];
+let currentCubeIdx = 62, currentFaceId = 3, visualMode = 'SINGLE';
+let rotYaw = -0.55, rotPitch = 0.42, isDragging = false, lastX = 0, lastY = 0, projectedNodes = [];
+
+function coordToIndex(x, y, z) {
+  if (x < 0 || x >= 5 || y < 0 || y >= 5 || z < 0 || z >= 5) return -1;
+  return x * 25 + y * 5 + z;
+}
+function initBigCube125() {
+  cubes.length = 0;
+  for (let x = 0; x < 5; x++) {
+    for (let y = 0; y < 5; y++) {
+      for (let z = 0; z < 5; z++) {
+        const idx = coordToIndex(x, y, z);
+        const name = (x===2 && y===2 && z===2) ? "Пульт_Сигнала" : `Пульт_${x}${y}${z}`;
+        const faces = {};
+        for (let f = 1; f <= 6; f++) faces[f] = DEFAULT_SCRIPTS[f];
+        const links = {};
+        for (let f = 1; f <= 6; f++) {
+          const [dx, dy, dz] = FACES[f].neighborDir;
+          links[f] = coordToIndex(x + dx, y + dy, z + dz);
+        }
+        cubes.push({ idx, x, y, z, name, signal: 10, dobavka: 15, inBuffer: 0, ticks: 0, activePulse: 0, faces, links });
+      }
+    }
+  }
+}
+function executeCubeLogic(c) {
+  let sig = c.signal + c.inBuffer, dob = c.dobavka, ticks = 0;
+  const lines = (c.faces[currentFaceId] || '').split('\n').map(l => l.trim()).filter(Boolean);
+  for (const line of lines) {
+    let m;
+    if ((m = line.match(/^Усилить\s+Сигнал\s+в\s+(-?\d+)/i))) { sig *= parseInt(m[1], 10); ticks += 2; }
+    else if (line.match(/^Сложить\s+Сигнал\s*,\s*Добавка/i)) { sig += dob; ticks += 1; }
+    else if ((m = line.match(/^Вычесть\s+Сигнал\s*,\s*(-?\d+)/i))) { sig -= parseInt(m[1], 10); ticks += 1; }
+    else if ((m = line.match(/^ЗАЛП\s+Преобразование\s*\(\s*ТАКТОВ\s*=\s*(\d+)\s*,\s*СИЛА\s*=\s*(\d+)\s*\)/i))) {
+      const t = parseInt(m[1], 10), p = parseInt(m[2], 10);
+      ticks += t; sig = (sig + p) ^ (t * 4);
+    } else { ticks += 1; }
+  }
+  c.signal = sig; c.ticks = ticks; c.inBuffer = 0; c.activePulse = 1.0;
+  let linkedCount = 0;
+  for (let f = 1; f <= 6; f++) {
+    const nIdx = c.links[f];
+    if (nIdx !== -1) {
+      linkedCount++;
+      cubes[nIdx].inBuffer += Math.trunc(c.signal / 6);
+      cubes[nIdx].activePulse = 0.7;
+    }
+  }
+  return { ticks, sig, linkedCount };
+}
+function updateUI() {
+  const c = cubes[currentCubeIdx], f = FACES[currentFaceId];
+  document.getElementById('nodeTitle').textContent = `УЗЕЛ: [${c.name}] (${c.x},${c.y},${c.z}) | ГРАНЬ: [${f.id}] ${f.code}`;
+  document.getElementById('cubeIndexLabel').textContent = `#${c.idx + 1}/125`;
+  document.getElementById('editorHeaderTitle').textContent = `МОДУЛЬ ГРАНИ [${f.code} / куб_${c.x}${c.y}${c.z}.куб]`;
+  const ed = document.getElementById('codeEditor');
+  if (ed.value !== c.faces[currentFaceId]) ed.value = c.faces[currentFaceId];
+  let cnt = 0;
+  for (let i = 1; i <= 6; i++) {
+    if (c.links[i] !== -1) cnt++;
+    document.getElementById('faceBtn' + i).classList.toggle('active-face', i === currentFaceId);
+  }
+  document.getElementById('neighborsHud').textContent = `СВЯЗАНО ГРАНЕЙ: ${cnt} | СИГНАЛ: ${c.signal} | ТАКТОВ: ${c.ticks}`;
+  document.getElementById('toggleViewBtn').textContent = visualMode === 'SINGLE' ? '3D МАТРИЦА 125' : 'ВИД: МАЛЫЙ КУБ';
+}
+function saveCurrentFaceCode() { cubes[currentCubeIdx].faces[currentFaceId] = document.getElementById('codeEditor').value; }
+function selectFace(id) {
+  saveCurrentFaceCode(); currentFaceId = id;
+  const c = cubes[currentCubeIdx];
+  logConsole(`[КОНТУР] Узел: ${c.name} | Грань: ${FACES[id].code}`, 'log-dim');
+  updateUI();
+}
+function stepCube(d) { saveCurrentFaceCode(); currentCubeIdx = (currentCubeIdx + d + 125) % 125; updateUI(); }
+function insertCmd(t) {
+  const ed = document.getElementById('codeEditor');
+  ed.value = ed.value.trim() ? (ed.value.trim() + '\n' + t) : t;
+  saveCurrentFaceCode();
+}
+function clearEditor() { document.getElementById('codeEditor').value = ''; saveCurrentFaceCode(); }
+function cloneLogicToAll() {
+  saveCurrentFaceCode();
+  const src = cubes[currentCubeIdx];
+  for (let i = 0; i < 125; i++) for (let f = 1; f <= 6; f++) cubes[i].faces[f] = src.faces[f];
+  logConsole(`[МАТРИЦА 125] Логика узла [${src.name}] прошита во все 125 КУБов.`, 'log-cyan');
+}
+function compileAndRunCube() {
+  saveCurrentFaceCode();
+  const c = cubes[currentCubeIdx], res = executeCubeLogic(c);
+  logConsole(`[КОНТУР] Узел: ${c.name} | Грань: ${FACES[currentFaceId].code}`, 'log-dim');
+  logConsole(`[СБОРКА] Узел [${c.name}] успешно сплавлен. Тактов: ${res.ticks}`);
+  updateUI();
+}
+function propagateWave125() {
+  saveCurrentFaceCode();
+  let t = 0, b = 0;
+  for (let i = 0; i < 125; i++) { const r = executeCubeLogic(cubes[i]); t += r.ticks; b += r.linkedCount; }
+  logConsole(`[ВОЛНА 125] Сплавлены все 125 КУБов. Тактов: ${t} | Межгранных передач: ${b}`, 'log-cyan');
+  updateUI();
+}
+function resetCurrentCube() {
+  const c = cubes[currentCubeIdx];
+  for (let f = 1; f <= 6; f++) c.faces[f] = DEFAULT_SCRIPTS[f];
+  c.signal = 10; c.inBuffer = 0; updateUI();
+  logConsole(`[СБРОС] Узел [${c.name}] сброшен.`);
+}
+function inspectBridgeTopology() {
+  const c = cubes[currentCubeIdx], arr = [];
+  for (let f = 1; f <= 6; f++) arr.push(`${FACES[f].code}→${c.links[f]!==-1 ? '#'+ (c.links[f]+1) : 'КРАЙ'}`);
+  logConsole(`[МОСТЫ ${c.name}]: ${arr.join(' | ')}`, 'log-cyan');
+}
+function toggleVisualMode() {
+  visualMode = visualMode === 'SINGLE' ? 'MATRIX125' : 'SINGLE';
+  document.getElementById('tab1').classList.toggle('active', visualMode === 'SINGLE');
+  document.getElementById('tab2').classList.toggle('active', visualMode === 'MATRIX125');
+  updateUI();
+}
+function switchMode(m) {
+  document.getElementById('tab1').classList.toggle('active', m === 'FORGE');
+  document.getElementById('tab2').classList.toggle('active', m === 'MATRIX');
+  document.getElementById('tab3').classList.toggle('active', m === 'SHELL');
+  if (m === 'FORGE') visualMode = 'SINGLE';
+  else if (m === 'MATRIX') visualMode = 'MATRIX125';
+  else inspectBridgeTopology();
+  updateUI();
+}
+function logConsole(msg, cls = '') {
+  const box = document.getElementById('consoleBox'), d = document.createElement('div');
+  if (cls) d.className = cls;
+  d.textContent = msg; box.appendChild(d); box.scrollTop = box.scrollHeight;
+}
+const canvas = document.getElementById('cubeCanvas'), ctx = canvas.getContext('2d');
+function resizeCanvas() {
+  const r = canvas.parentElement.getBoundingClientRect();
+  canvas.width = r.width * window.devicePixelRatio; canvas.height = r.height * window.devicePixelRatio;
+  ctx.setTransform(window.devicePixelRatio, 0, 0, window.devicePixelRatio, 0, 0);
+}
+window.addEventListener('resize', resizeCanvas);
+
+function drawSingleCubeView(w, h) {
+  const c = cubes[currentCubeIdx], f = FACES[currentFaceId];
+  const cx = w / 2 - 10, cy = h / 2 + 10, bw = 132, bh = 84, dx = 26, dy = -22;
+  const x0 = cx - bw / 2, y0 = cy - bh / 2;
+  ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x0+dx, y0+dy); ctx.lineTo(x0+bw+dx, y0+dy); ctx.lineTo(x0+bw, y0); ctx.closePath();
+  ctx.fillStyle = 'rgba(16,38,58,0.55)'; ctx.fill(); ctx.strokeStyle = '#2596be'; ctx.lineWidth = 1.5; ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(x0+bw, y0); ctx.lineTo(x0+bw+dx, y0+dy); ctx.lineTo(x0+bw+dx, y0+bh+dy); ctx.lineTo(x0+bw, y0+bh); ctx.closePath();
+  ctx.fillStyle = 'rgba(10,22,36,0.75)'; ctx.fill(); ctx.strokeStyle = '#2596be'; ctx.stroke();
+  ctx.beginPath(); ctx.rect(x0, y0, bw, bh); ctx.fillStyle = 'rgba(18,68,41,0.75)'; ctx.fill();
+  ctx.strokeStyle = '#34d399'; ctx.lineWidth = 2.2; ctx.stroke();
+  ctx.fillStyle = '#4ade80'; ctx.font = 'bold 12px Courier New'; ctx.textAlign = 'center';
+  ctx.fillText(f.code, x0 + bw/2, y0 + bh/2 - 5);
+  ctx.fillStyle = '#cbe5ff'; ctx.font = '11px Courier New';
+  ctx.fillText(`[${c.name}]`, x0 + bw/2, y0 + bh/2 + 14);
+  ctx.font = '10px Courier New'; ctx.fillStyle = '#8faec9';
+  ctx.fillText('05_КОНТРОЛЬ', x0 + bw/2 + dx/2, y0 + dy/2 + 3);
+  ctx.textAlign = 'right'; ctx.fillText('01_ВХОД •', x0 - 8, y0 + bh/2 + 3);
+  ctx.textAlign = 'left'; ctx.fillText('• 04_СВЯЗЬ', x0 + bw + dx + 6, y0 + bh/2 - 3);
+  ctx.textAlign = 'center'; ctx.fillText('02_ПАМЯТЬ ───► 06_ВЫХОД', x0 + bw/2 + 4, y0 + bh + 15);
+}
+function project3D(x, y, z, w, h) {
+  const cy = Math.cos(rotYaw), sy = Math.sin(rotYaw), cp = Math.cos(rotPitch), sp = Math.sin(rotPitch);
+  const x1 = x * cy - z * sy, z1 = x * sy + z * cy, y2 = y * cp - z1 * sp, z2 = y * sp + z1 * cp;
+  const sc = 320 / (230 + z2);
+  return { sx: w/2 + x1 * sc, sy: h/2 + y2 * sc, z: z2 };
+}
+function drawMatrix125View(w, h) {
+  projectedNodes = [];
+  for (let i = 0; i < 125; i++) {
+    const c = cubes[i], p = project3D((c.x-2)*21, (c.y-2)*21, (c.z-2)*21, w, h);
+    projectedNodes.push({ idx: i, ...p, cube: c });
+  }
+  for (let i = 0; i < 125; i++) {
+    const c = cubes[i], p1 = projectedNodes[i];
+    [6, 5, 4].forEach(fId => {
+      const nIdx = c.links[fId];
+      if (nIdx !== -1) {
+        const p2 = projectedNodes[nIdx], act = (i === currentCubeIdx || nIdx === currentCubeIdx);
+        ctx.beginPath(); ctx.moveTo(p1.sx, p1.sy); ctx.lineTo(p2.sx, p2.sy);
+        ctx.strokeStyle = act ? 'rgba(74,222,128,0.9)' : 'rgba(37,194,230,0.22)';
+        ctx.lineWidth = act ? 1.8 : 0.8; ctx.stroke();
+      }
+    });
+  }
+  const sorted = [...projectedNodes].sort((a, b) => b.z - a.z);
+  for (const n of sorted) {
+    const sel = n.idx === currentCubeIdx, nb = Object.values(cubes[currentCubeIdx].links).includes(n.idx);
+    const sz = sel ? 10 : (nb ? 7.5 : 5.5);
+    ctx.fillStyle = sel ? '#22c55e' : (nb ? '#25c2e6' : '#102336');
+    ctx.strokeStyle = sel ? '#fff' : '#25638f';
+    ctx.beginPath(); ctx.rect(n.sx - sz/2, n.sy - sz/2, sz, sz); ctx.fill(); ctx.stroke();
+  }
+}
+canvas.addEventListener('pointerdown', e => { isDragging = true; lastX = e.clientX; lastY = e.clientY; });
+window.addEventListener('pointermove', e => {
+  if (!isDragging || visualMode !== 'MATRIX125') return;
+  rotYaw += (e.clientX - lastX) * 0.01;
+  rotPitch = Math.max(-1.2, Math.min(1.2, rotPitch + (e.clientY - lastY) * 0.01));
+  lastX = e.clientX; lastY = e.clientY;
+});
+window.addEventListener('pointerup', () => { isDragging = false; });
+canvas.addEventListener('click', e => {
+  if (visualMode !== 'MATRIX125') return;
+  const r = canvas.getBoundingClientRect(), mx = e.clientX - r.left, my = e.clientY - r.top;
+  let best = -1, dist = 18;
+  for (const p of projectedNodes) {
+    const d = Math.hypot(p.sx - mx, p.sy - my);
+    if (d < dist) { dist = d; best = p.idx; }
+  }
+  if (best !== -1) { saveCurrentFaceCode(); currentCubeIdx = best; updateUI(); }
+});
+function renderLoop() {
+  const w = canvas.width / window.devicePixelRatio, h = canvas.height / window.devicePixelRatio;
+  ctx.clearRect(0, 0, w, h);
+  if (visualMode === 'SINGLE') drawSingleCubeView(w, h); else drawMatrix125View(w, h);
+  requestAnimationFrame(renderLoop);
+}
+initBigCube125(); resizeCanvas(); updateUI();
+logConsole("[КОНТУР] Узел: Пульт_Сигнала | Грань: 03_ЛОГИКА", "log-dim");
+logConsole("[СБОРКА] Узел [Пульт_Сигнала] успешно сплавлен. Тактов: 9");
+logConsole("[СБОРКА] Узел [Пульт_Сигнала] успешно сплавлен. Тактов: 25");
+requestAnimationFrame(renderLoop);
+</script>
+</body>
+</html>

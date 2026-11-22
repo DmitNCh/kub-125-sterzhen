@@ -1,0 +1,27 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'ru.sterzhen.kub125'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "ru.sterzhen.kub125"
+        minSdk 24
+        targetSdk 34
+        versionCode 125
+        versionName "125.1.0"
+    }
+
+    buildTypes {
+        debug {
+            minifyEnabled false
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+dependencies {}
