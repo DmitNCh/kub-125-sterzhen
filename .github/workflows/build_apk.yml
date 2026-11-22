@@ -41,6 +41,6 @@ jobs:
       - name: Публикация прямой ссылки на APK в Releases
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v125.1
+          tag_name: v125.2
           name: "Большой КУБ 125 (5x5x5) APK"
           files: ./KUB_125_STERZHEN.apk
